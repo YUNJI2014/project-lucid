@@ -1,0 +1,26 @@
+# 줄바꿈 정규화
+* text=auto
+
+# Unity 텍스트 에셋 (Force Text 직렬화 전제)
+*.cs        text diff=csharp
+*.shader    text
+*.cginc     text
+*.unity     text merge=unityyamlmerge eol=lf
+*.prefab    text merge=unityyamlmerge eol=lf
+*.asset     text merge=unityyamlmerge eol=lf
+*.mat       text merge=unityyamlmerge eol=lf
+*.anim      text merge=unityyamlmerge eol=lf
+*.controller text merge=unityyamlmerge eol=lf
+*.meta      text merge=unityyamlmerge eol=lf
+
+# 바이너리 (LFS 를 켤 경우 아래 줄들을 filter=lfs diff=lfs merge=lfs -text 로 교체)
+*.png       binary
+*.jpg       binary
+*.psd       binary
+*.fbx       binary
+*.blend     binary
+*.wav       binary
+*.mp3       binary
+*.ogg       binary
+*.ttf       binary
+*.otf       binary
