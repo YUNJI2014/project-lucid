@@ -1,4 +1,4 @@
-# 13호 악몽 여관 — 작업 규칙
+# 13호의 여관 — 작업 규칙
 
 Unity 게임 프로젝트. 기획 전체는 [docs/GDD.md](docs/GDD.md), 아트 규칙은 [docs/art-guide.md](docs/art-guide.md) 참고.
 이 문서는 **Claude Code가 이 레포에서 작업할 때 지켜야 하는 규칙**이다. 사람 협업자도 같은 규칙을 따른다.
@@ -15,21 +15,21 @@ main (배포/마일스톤)  ←  develop (개발 통합)  ←  feature/fix/... (
 - **`develop` → `main`은 배포·마일스톤 시점에만** 머지한다. 평소 작업 결과물은 `develop`까지만 간다.
 - `main`, `develop`에는 **직접 push 금지**. 반드시 PR을 거친다. (GitHub 브랜치 보호 규칙으로 강제됨 — [4장](#4-github-브랜치-보호) 참고)
 - PR 머지에는 **최소 1명의 승인**이 필요하다.
-- PR을 올리면 **CodeRabbit**이 자동으로 리뷰를 붙인다. 사람 승인과 별개로 참고할 것.
+- `develop` 또는 `main`을 대상으로 PR을 올리면 **CodeRabbit**이 자동으로 리뷰를 붙인다. 사람 승인과 별개로 참고할 것.
 
 ### 브랜치명
 
-`종류/#이슈번호-기능설명` (하이픈으로 구분)
+`종류/기능설명` (하이픈으로 구분). 이슈 트래커를 아직 안 써서 `#이슈번호`는 생기면 붙이고, 지금은 생략 가능.
 
 prefix: `feat` `fix` `docs` `style` `refactor` `test` `chore` `hotfix`
 
-예: `feat/#3-room-inspection`, `fix/#7-fragment-slot-bug`
+예: `feat/room-inspection`, `fix/fragment-slot-bug`
 
 ### 커밋 메시지
 
-`prefix: 상세설명 (#이슈번호)` — **영어로 작성**.
+`prefix: 상세설명` — **한국어로 작성**. PR 제목·본문도 한국어.
 
-예: `feat: add limited room inspection system (#3)`
+예: `feat: 제한된 객실 조사 시스템 추가`
 
 ---
 
@@ -43,45 +43,60 @@ prefix: `feat` `fix` `docs` `style` `refactor` `test` `chore` `hotfix`
 
 ---
 
-## 3. 하네스 엔지니어링 — Claude가 스스로 검증하는 방법
+## 3. 개발 환경 확정 사항
+
+| 항목 | 값 |
+|---|---|
+| Unity 버전 | **6000.3.23f1 (Unity 6.3 LTS)** |
+| Color Space | **Linear** |
+| Active Input Handling | **Input System Package (New)** — `com.unity.inputsystem` |
+| 렌더 파이프라인 | 미정 (빌트인 상태로 시작, GDD TODO 참고) |
+
+새로 프로젝트를 받은 사람은 위 값들과 로컬 설정이 다르면 맞춰서 쓸 것. 특히 입력 코드는 구 Input Manager(`Input.GetKeyDown` 등)가 아니라 새 Input System 기준으로 짠다.
+
+---
+
+## 4. 하네스 엔지니어링 — Claude가 스스로 검증하는 방법
 
 이 프로젝트는 로직 검증 가능성을 아키텍처 단계에서부터 챙긴다.
 
-### 3.1 원칙 — 순수 로직은 MonoBehaviour에서 분리
+### 4.1 원칙 — 순수 로직은 MonoBehaviour에서 분리
 
-**기억 삭제/정화 판정, 안식·용기 파편 스킬 효과, 여관 수입 계산** 같은 상태 전이가 있는 로직은
+**기억 삭제/정화 판정, 안식·용기 파편 스킬 효과, 퍼즐/단서 조사 상태, 전투 공격 패턴-트리거 상태** 같은 상태 전이가 있는 로직은
 `MonoBehaviour`에 직접 넣지 말고 **순수 C# 클래스**로 분리해서 짠다.
 
 - MonoBehaviour에 다 넣으면 Claude가 **컴파일 여부밖에 확인 못 한다.**
 - 순수 C# 클래스로 분리하면 **EditMode 테스트로 동작을 100% 검증**하면서 작업할 수 있다.
-- 특히 "기억 A 삭제 → 패턴 B·C 사라짐 → 현실 손님 상태 변화" 같은 다단계 상태 전이는 테스트 없이 가면 반드시 꼬인다.
+- 특히 "기억 A 삭제 → 패턴 B 사라짐 → 파편 B 획득" 같은 다단계 상태 전이는 테스트 없이 가면 반드시 꼬인다.
+- 실시간 전투라 해도 **판정 자체(스턴 여부, 패턴 활성/비활성, 파편 지급)는 프레임 단위 물리/애니메이션과 분리**해서 로직만 따로 테스트 가능하게 짠다.
 
-### 3.2 검증 고리 (Claude가 스스로 확인)
+### 4.2 검증 고리 (Claude가 스스로 확인)
 
 - **컴파일 체크** — Unity batchmode CLI로 컴파일 에러를 직접 읽고 고친다. 에디터를 켜지 않아도 된다.
-- **EditMode 테스트** — Unity Test Framework를 CLI로 실행해서 순수 로직 클래스를 검증한다.
+- **EditMode 테스트** — Unity Test Framework를 CLI로 실행해서 순수 로직 클래스를 검증한다 (`com.unity.test-framework` 설치 완료).
 - 위 둘은 코드를 수정한 뒤 커밋하기 전에 실행하는 것을 기본으로 한다.
 
-### 3.3 가드레일 (되돌릴 수 없는 일 전에 멈춤)
+### 4.3 가드레일 (되돌릴 수 없는 일 전에 멈춤)
 
 - `.meta` 파일을 gitignore에 추가하는 변경은 절대 하지 않는다.
 - `git push --force`, 브랜치 삭제, `gh repo delete`는 사용하지 않는다.
 - Collaborator 초대/삭제, 레포 설정(Public/Private, 브랜치 보호 규칙 등) 변경 전에는 반드시 먼저 확인받는다.
 - 이 가드레일들은 `.claude/settings.json`의 permission/hook 설정으로도 강제한다 — CLAUDE.md는 Claude가 "잊으면" 뚫리지만, hook/deny 규칙은 잊어도 안 뚫린다.
 
-### 3.4 하네스로 못 덮는 것
+### 4.4 하네스로 못 덮는 것
 
-게임 손맛, 아트 톤, 밸런스, "악몽이 생생하게 느껴지는가" 같은 건 테스트로 검증할 수 없다.
+게임 손맛, 아트 톤, 밸런스, 실시간 전투의 타격감 같은 건 테스트로 검증할 수 없다.
 사람이 직접 플레이해서 판단해야 한다 — 여기 욕심내서 자동화하려 들지 않는다.
 
 ---
 
-## 4. GitHub 브랜치 보호
+## 5. GitHub 브랜치 보호
 
 `main`, `develop` 모두 다음 규칙이 걸려 있다 (2026-09-04 설정):
 
 - PR 없이 직접 push 불가
 - PR 머지에 승인 1명 이상 필요
 - Force-push 금지, 브랜치 삭제 금지
+- `enforce_admins` 켜짐 — 레포 관리자(윤지)도 예외 없이 PR을 거쳐야 한다
 
 규칙 자체를 바꾸는 것은 레포 관리자 권한이 필요한 작업이라, Claude가 임의로 수정하지 않는다.
