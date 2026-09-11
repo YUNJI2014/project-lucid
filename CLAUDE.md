@@ -13,7 +13,7 @@ main (배포/마일스톤)  ←  develop (개발 통합)  ←  feature/fix/... (
 
 - **모든 작업은 `develop`에서 분기**한다. `main`에서 직접 분기하지 않는다.
 - **`develop` → `main`은 배포·마일스톤 시점에만** 머지한다. 평소 작업 결과물은 `develop`까지만 간다.
-- `main`, `develop`에는 **직접 push 금지**. 반드시 PR을 거친다. (GitHub 브랜치 보호 규칙으로 강제됨 — [4장](#4-github-브랜치-보호) 참고)
+- `main`, `develop`에는 **직접 push 금지**. 반드시 PR을 거친다. (GitHub 브랜치 보호 규칙으로 강제됨 — [5장](#5-github-브랜치-보호) 참고)
 - PR 머지에는 **최소 1명의 승인**이 필요하다.
 - `develop` 또는 `main`을 대상으로 PR을 올리면 **CodeRabbit**이 자동으로 리뷰를 붙인다. 사람 승인과 별개로 참고할 것.
 
@@ -52,7 +52,9 @@ prefix: `feat` `fix` `docs` `style` `refactor` `test` `chore` `hotfix`
 | Active Input Handling | **Input System Package (New)** — `com.unity.inputsystem` |
 | 렌더 파이프라인 | 미정 (빌트인 상태로 시작, GDD TODO 참고) |
 
-새로 프로젝트를 받은 사람은 위 값들과 로컬 설정이 다르면 맞춰서 쓸 것. 특히 입력 코드는 구 Input Manager(`Input.GetKeyDown` 등)가 아니라 새 Input System 기준으로 짠다.
+위 값들은 `ProjectSettings/`에 커밋돼 있어서 레포를 받으면 자동으로 적용된다. **임의로 바꾸지 말고, 바꿔야 하면 PR로 올려서 팀 합의를 받는다.** (에디터에서 실수로 바꾸면 `ProjectSettings.asset` diff로 올라오니 리뷰에서 걸러낸다.)
+
+특히 입력 코드는 구 Input Manager(`Input.GetKeyDown` 등)가 아니라 새 Input System 기준으로 짠다.
 
 ---
 
@@ -81,7 +83,15 @@ prefix: `feat` `fix` `docs` `style` `refactor` `test` `chore` `hotfix`
 - `.meta` 파일을 gitignore에 추가하는 변경은 절대 하지 않는다.
 - `git push --force`, 브랜치 삭제, `gh repo delete`는 사용하지 않는다.
 - Collaborator 초대/삭제, 레포 설정(Public/Private, 브랜치 보호 규칙 등) 변경 전에는 반드시 먼저 확인받는다.
-- 이 가드레일들은 `.claude/settings.json`의 permission/hook 설정으로도 강제한다 — CLAUDE.md는 Claude가 "잊으면" 뚫리지만, hook/deny 규칙은 잊어도 안 뚫린다.
+이 가드레일들은 문구로만 있는 게 아니라 `.claude/settings.json`으로 실제 강제된다 — CLAUDE.md는 Claude가 "잊으면" 뚫리지만, deny/hook 규칙은 잊어도 안 뚫린다.
+
+| 계층 | 대상 | 동작 |
+|---|---|---|
+| `permissions.deny` | `git push --force`, `git push -f`, `git push --delete`, `git branch -D`, `gh repo delete/archive` | 실행 자체가 차단됨 |
+| `permissions.ask` | `gh api`의 PUT/POST/PATCH/DELETE, `gh repo edit`, `gh pr merge` | 매번 사람에게 확인을 받음 |
+| `PreToolUse` 훅 | 위 위험 패턴을 명령어 어느 위치에서든 탐지 | 차단 (deny 규칙은 앞부분만 매칭돼서 `git push origin develop --force` 같은 형태를 놓치는데, 훅이 이걸 잡는다) |
+
+> 단, 이건 **Claude Code 세션에만** 적용된다. 사람이 터미널에서 직접 `git push --force`를 치는 건 못 막는다 — 그건 [5장](#5-github-브랜치-보호)의 GitHub 브랜치 보호가 막는다.
 
 ### 4.4 하네스로 못 덮는 것
 
