@@ -1,0 +1,10 @@
+#!/bin/sh
+# 커밋할 때 메시지 형식을 검사한다.
+#
+# 활성화(각자 한 번만 실행):
+#   git config core.hooksPath .githooks
+#
+# 이 훅을 안 켜도 CI(.github/workflows/commit-lint.yml)가 PR 에서 같은 검사를 하므로
+# 결국 걸린다. 다만 여기서 걸리면 푸시 전에 바로 알 수 있어 고치기 쉽다.
+
+exec sh "$(git rev-parse --show-toplevel)/scripts/check-commit-msg.sh" "$1"

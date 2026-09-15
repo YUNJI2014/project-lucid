@@ -93,7 +93,28 @@ prefix: `feat` `fix` `docs` `style` `refactor` `test` `chore` `hotfix`
 
 > 단, 이건 **Claude Code 세션에만** 적용된다. 사람이 터미널에서 직접 `git push --force`를 치는 건 못 막는다 — 그건 [5장](#5-github-브랜치-보호)의 GitHub 브랜치 보호가 막는다.
 
-### 4.4 하네스로 못 덮는 것
+### 4.4 커밋 메시지 검사
+
+커밋 메시지 규칙도 문구로만 두지 않고 [`scripts/check-commit-msg.sh`](scripts/check-commit-msg.sh)로 강제한다.
+`야르 ㅇㅈㄹ` 처럼 형식을 안 지킨 메시지, 자음·모음만 쓴 말, 너무 짧은 설명, 제목 끝 마침표를 거부한다.
+
+| 계층 | 시점 | 성격 |
+|---|---|---|
+| `.githooks/commit-msg` | `git commit` 할 때 | 로컬. **각자 한 번 켜야 한다** (아래 명령) |
+| `.github/workflows/commit-lint.yml` | PR 올릴 때 | 서버. 로컬 훅을 안 켰어도 여기서 걸린다 |
+
+**로컬 훅 켜기 — 레포를 클론한 뒤 한 번만 실행한다.**
+
+```sh
+git config core.hooksPath .githooks
+```
+
+`.git/hooks/` 는 git 이 추적하지 않아서 팀원에게 자동으로 전파되지 않는다. 그래서 훅을 `.githooks/` 에 커밋해두고
+`core.hooksPath` 로 가리키는 방식을 쓴다. 안 켜도 CI 가 잡지만, 로컬에서 걸리면 푸시 전에 고칠 수 있어 편하다.
+
+두 계층이 **같은 스크립트를 호출**한다. 규칙을 바꿀 땐 `scripts/check-commit-msg.sh` 한 곳만 고치면 된다.
+
+### 4.5 하네스로 못 덮는 것
 
 게임 손맛, 아트 톤, 밸런스, 실시간 전투의 타격감 같은 건 테스트로 검증할 수 없다.
 사람이 직접 플레이해서 판단해야 한다 — 여기 욕심내서 자동화하려 들지 않는다.
