@@ -26,7 +26,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "grep -Eq 'push[^\"]*(--force|-f )|push[^\"]*--delete|branch +-D|repo +delete' && printf '%s' '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"CLAUDE.md 가드레일 위반: force push / 브랜치 삭제 / 레포 삭제는 금지되어 있습니다. 꼭 필요하면 사람이 직접 실행하세요.\"}}' || true",
+            "command": "grep -Eq 'push[^\"]*(--force|[[:space:]]-f([^[:alnum:]]|$))|push[^\"]*--delete|branch +-D|repo +delete' && printf '%s' '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"CLAUDE.md 가드레일 위반: force push / 브랜치 삭제 / 레포 삭제는 금지되어 있습니다. 꼭 필요하면 사람이 직접 실행하세요.\"}}' || true",
             "statusMessage": "가드레일 검사 중"
           }
         ]
