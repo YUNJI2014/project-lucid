@@ -1,6 +1,11 @@
 # 줄바꿈 정규화
 * text=auto
 
+# 셸 스크립트와 git 훅은 항상 LF.
+# CRLF 로 체크아웃되면 Linux/macOS 와 CI 에서 "bad interpreter: /bin/sh^M" 으로 죽는다.
+*.sh            text eol=lf
+.githooks/*     text eol=lf
+
 # Unity 텍스트 에셋 (Force Text 직렬화 전제)
 *.cs        text diff=csharp
 *.shader    text
