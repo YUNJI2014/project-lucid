@@ -1,0 +1,36 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "deny": [
+      "Bash(git push --force*)",
+      "Bash(git push -f*)",
+      "Bash(git push --delete*)",
+      "Bash(git branch -D*)",
+      "Bash(gh repo delete*)",
+      "Bash(gh repo archive*)"
+    ],
+    "ask": [
+      "Bash(gh api -X PUT*)",
+      "Bash(gh api -X POST*)",
+      "Bash(gh api -X PATCH*)",
+      "Bash(gh api -X DELETE*)",
+      "Bash(gh api --method*)",
+      "Bash(gh repo edit*)",
+      "Bash(gh pr merge*)"
+    ]
+  },
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "grep -Eq 'push[^\"]*(--force|[[:space:]]-f([^[:alnum:]]|$))|push[^\"]*--delete|branch +-D|repo +delete' && printf '%s' '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"permissionDecision\":\"deny\",\"permissionDecisionReason\":\"CLAUDE.md 가드레일 위반: force push / 브랜치 삭제 / 레포 삭제는 금지되어 있습니다. 꼭 필요하면 사람이 직접 실행하세요.\"}}' || true",
+            "statusMessage": "가드레일 검사 중"
+          }
+        ]
+      }
+    ]
+  }
+}

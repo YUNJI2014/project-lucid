@@ -1,0 +1,43 @@
+name: 커밋 메시지 검사
+
+on:
+  pull_request:
+    branches: [develop, main]
+
+jobs:
+  commit-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: PR 에 포함된 커밋 메시지 검사
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -eu
+          FAILED=0
+          TMP=$(mktemp)
+
+          for SHA in $(git rev-list --no-merges "$BASE_SHA".."$HEAD_SHA"); do
+            git log -1 --format=%B "$SHA" > "$TMP"
+            SUBJECT=$(head -1 "$TMP")
+            if sh scripts/check-commit-msg.sh "$TMP"; then
+              echo "  ✓ ${SHA%${SHA#???????}}  $SUBJECT"
+            else
+              echo "    ^ 위 커밋: ${SHA%${SHA#???????}}"
+              FAILED=1
+            fi
+          done
+
+          if [ "$FAILED" -ne 0 ]; then
+            echo ""
+            echo "커밋 메시지 규칙을 어긴 커밋이 있습니다. CLAUDE.md 1장 \"커밋 메시지\" 를 참고해 고쳐주세요."
+            echo "마지막 커밋만 고치려면:  git commit --amend"
+            exit 1
+          fi
+
+          echo ""
+          echo "모든 커밋 메시지가 규칙에 맞습니다."
