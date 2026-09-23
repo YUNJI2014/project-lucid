@@ -1,0 +1,39 @@
+name: 릴리스 브랜치 검사
+
+# main 은 릴리스/마일스톤 브랜치다. 작업 브랜치가 develop 을 건너뛰고 바로 들어오는 것을 막는다.
+# (CLAUDE.md 1장 — "develop → main 은 배포·마일스톤 시점에만 머지한다")
+#
+# hotfix 를 main 에 직접 넣어야 하는 상황이 생기면 아래 ALLOWED 에 hotfix/* 를 추가하면 된다.
+# 지금은 CLAUDE.md 에 적힌 대로 develop 만 허용한다.
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  guard:
+    runs-on: ubuntu-latest
+    steps:
+      - name: head 브랜치가 develop 인지 확인
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          set -eu
+
+          if [ "$HEAD_REF" = "develop" ]; then
+            echo "✓ develop → main 릴리스 PR 입니다."
+            exit 0
+          fi
+
+          echo ""
+          echo "  ✗ main 으로 오는 PR 은 develop 에서만 올릴 수 있습니다."
+          echo ""
+          echo "    현재 head 브랜치: $HEAD_REF"
+          echo ""
+          echo "  main 은 릴리스/마일스톤 브랜치입니다. 작업 브랜치는 develop 으로 보내주세요."
+          echo "  이 PR 을 그대로 옮기려면 GitHub PR 화면에서 base 를 develop 으로 바꾸면 됩니다."
+          echo "  (Edit 버튼 옆 base 드롭다운 — PR 번호와 리뷰가 유지됩니다)"
+          echo ""
+          echo "  자세한 규칙은 CLAUDE.md 1장 \"Git Flow\" 참고."
+          echo ""
+          exit 1
