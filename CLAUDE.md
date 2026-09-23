@@ -13,6 +13,8 @@ main (배포/마일스톤)  ←  develop (개발 통합)  ←  feature/fix/... (
 
 - **모든 작업은 `develop`에서 분기**한다. `main`에서 직접 분기하지 않는다.
 - **`develop` → `main`은 배포·마일스톤 시점에만** 머지한다. 평소 작업 결과물은 `develop`까지만 간다.
+- `main`으로 PR을 올릴 수 있는 건 **`develop`(정규 릴리스)과 `hotfix/*`(긴급 수정)뿐**이다. 일반 작업 브랜치가 `develop`을 건너뛰는 것은 CI(`release-branch-guard`)가 막는다.
+- **핫픽스를 `main`에 머지했으면 `develop`에도 반드시 반영한다.** 안 하면 다음 릴리스에서 그 수정이 되돌아간 것처럼 보인다.
 - `main`, `develop`에는 **직접 push 금지**. 반드시 PR을 거친다. (GitHub 브랜치 보호 규칙으로 강제됨 — [5장](#5-github-브랜치-보호) 참고)
 - PR 머지에는 **최소 1명의 승인**이 필요하다.
 - `develop` 또는 `main`을 대상으로 PR을 올리면 **CodeRabbit**이 자동으로 리뷰를 붙인다. 사람 승인과 별개로 참고할 것.

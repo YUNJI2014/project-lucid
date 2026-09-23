@@ -3,8 +3,12 @@ name: 릴리스 브랜치 검사
 # main 은 릴리스/마일스톤 브랜치다. 작업 브랜치가 develop 을 건너뛰고 바로 들어오는 것을 막는다.
 # (CLAUDE.md 1장 — "develop → main 은 배포·마일스톤 시점에만 머지한다")
 #
-# hotfix 를 main 에 직접 넣어야 하는 상황이 생기면 아래 ALLOWED 에 hotfix/* 를 추가하면 된다.
-# 지금은 CLAUDE.md 에 적힌 대로 develop 만 허용한다.
+# 허용:
+#   develop    정규 릴리스
+#   hotfix/*   긴급 수정 (핫픽스 라벨 설명 "main 긴급 수정" 과 같은 맥락)
+#
+# 핫픽스를 막아두면 정작 급할 때 브랜치 보호를 통째로 꺼야 한다(enforce_admins 가 켜져 있어
+# 관리자도 우회가 안 된다). 그건 가장 급한 순간에 가장 위험한 조작이라 처음부터 열어둔다.
 
 on:
   pull_request:
@@ -14,23 +18,37 @@ jobs:
   guard:
     runs-on: ubuntu-latest
     steps:
-      - name: head 브랜치가 develop 인지 확인
+      - name: head 브랜치 확인
         env:
           HEAD_REF: ${{ github.head_ref }}
         run: |
           set -eu
 
           if [ "$HEAD_REF" = "develop" ]; then
-            echo "✓ develop → main 릴리스 PR 입니다."
+            echo "✓ develop → main 정규 릴리스 PR 입니다."
             exit 0
           fi
 
+          case "$HEAD_REF" in
+            hotfix/*)
+              echo "✓ 핫픽스 PR 입니다: $HEAD_REF"
+              echo ""
+              echo "  ⚠️  머지한 뒤 develop 에도 반드시 반영하세요."
+              echo ""
+              echo "      핫픽스는 main 에만 들어가므로, 그대로 두면 develop 에는 수정이 없습니다."
+              echo "      다음 릴리스에서 이 수정이 되돌아간 것처럼 보이게 됩니다."
+              echo "      main 을 develop 으로 머지하는 PR 을 따로 올려주세요."
+              echo ""
+              exit 0
+              ;;
+          esac
+
           echo ""
-          echo "  ✗ main 으로 오는 PR 은 develop 에서만 올릴 수 있습니다."
+          echo "  ✗ main 으로 오는 PR 은 develop 또는 hotfix/* 에서만 올릴 수 있습니다."
           echo ""
           echo "    현재 head 브랜치: $HEAD_REF"
           echo ""
-          echo "  main 은 릴리스/마일스톤 브랜치입니다. 작업 브랜치는 develop 으로 보내주세요."
+          echo "  main 은 릴리스/마일스톤 브랜치입니다. 일반 작업 브랜치는 develop 으로 보내주세요."
           echo "  이 PR 을 그대로 옮기려면 GitHub PR 화면에서 base 를 develop 으로 바꾸면 됩니다."
           echo "  (Edit 버튼 옆 base 드롭다운 — PR 번호와 리뷰가 유지됩니다)"
           echo ""
