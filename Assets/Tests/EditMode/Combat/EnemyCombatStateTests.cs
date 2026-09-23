@@ -3,7 +3,7 @@ using NUnit.Framework;
 
 public class EnemyCombatStateTests
 {
-    private static EnemyCombatState CreateFloodState()
+    private static EnemyCombatState CreateFloodState(bool purificationUnlocked = false)
     {
         var memory = new TraumaMemory("mem.flood", "물에 빠졌던 기억", new[] { "pattern.water_wave", "pattern.door_seal" });
         var otherMemory = new TraumaMemory("mem.silence", "아무도 도와주지 않았던 기억", new[] { "pattern.silence" });
@@ -15,7 +15,11 @@ public class EnemyCombatStateTests
             new AttackPattern("pattern.silence", "정적"),
         };
 
-        return new EnemyCombatState(new[] { memory, otherMemory }, patterns);
+        var purification = new PurificationTracker(maxGauge: 100);
+        if (purificationUnlocked)
+            purification.Unlock();
+
+        return new EnemyCombatState(new[] { memory, otherMemory }, patterns, purification);
     }
 
     [Test]
@@ -62,5 +66,38 @@ public class EnemyCombatStateTests
 
         Assert.IsFalse(result.Success);
         Assert.AreEqual(3, state.ActivePatternCount);
+    }
+
+    [Test]
+    public void 기억을_하나라도_삭제하면_정화가_잠긴다()
+    {
+        var state = CreateFloodState(purificationUnlocked: true);
+
+        state.DeleteMemory("mem.flood");
+
+        Assert.IsTrue(state.Purification.IsLocked);
+        Assert.AreEqual(0, state.Purification.AddGauge(50), "잠긴 뒤에는 게이지가 오르지 않는다");
+    }
+
+    [Test]
+    public void 기억을_삭제하지_않으면_정화_게이지를_채울_수_있다()
+    {
+        var state = CreateFloodState(purificationUnlocked: true);
+
+        state.Purification.AddGauge(100);
+
+        Assert.IsFalse(state.HasDeletedAnyMemory);
+        Assert.IsTrue(state.Purification.IsPurificationReady);
+    }
+
+    [Test]
+    public void 삭제가_실패하면_정화는_잠기지_않는다()
+    {
+        var state = CreateFloodState(purificationUnlocked: true);
+
+        state.DeleteMemory("mem.unknown");
+
+        Assert.IsFalse(state.Purification.IsLocked);
+        Assert.AreEqual(50, state.Purification.AddGauge(50));
     }
 }
