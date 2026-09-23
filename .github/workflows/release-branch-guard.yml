@@ -10,15 +10,35 @@ name: 릴리스 브랜치 검사
 # 핫픽스를 막아두면 정작 급할 때 브랜치 보호를 통째로 꺼야 한다(enforce_admins 가 켜져 있어
 # 관리자도 우회가 안 된다). 그건 가장 급한 순간에 가장 위험한 조작이라 처음부터 열어둔다.
 
+# ⚠️ pull_request 가 아니라 pull_request_target 이다. 되돌리지 말 것.
+#
+# pull_request 는 "PR 의 머지 결과"에 있는 워크플로 파일을 실행한다. 즉 PR 안에서 이 파일을
+# exit 0 으로 고쳐놓고 job 이름만 유지하면, 같은 이름의 필수 체크가 초록불로 통과해버린다.
+# 검사 대상이 검사 규칙을 수정할 수 있는 구조라 필수 체크로서 의미가 없어진다.
+#
+# pull_request_target 은 항상 기본 브랜치(main)의 워크플로를 실행하므로 PR 이 손댈 수 없다.
+# 이 워크플로는 PR 코드를 checkout 하지도 실행하지도 않아서 pull_request_target 의 통상적인
+# 위험(신뢰되지 않은 코드가 상승된 권한으로 실행됨)에 해당하지 않는다.
+#
+# 대신 두 가지를 기억할 것.
+#   - 이 가드는 워크플로가 main 에 올라간 뒤부터 동작한다 (기본 브랜치 기준이라서).
+#   - 가드 자체를 고치는 변경은 PR 에서 미리 테스트할 수 없다. main 에 들어가야 반영된다.
+
 on:
-  pull_request:
+  pull_request_target:
     branches: [main]
+
+# pull_request_target 은 기본적으로 read/write 토큰과 시크릿을 받는다.
+# 이 잡은 이벤트 페이로드만 읽으므로 전부 회수한다.
+permissions: {}
 
 jobs:
   guard:
     runs-on: ubuntu-latest
     steps:
       - name: head 브랜치 확인
+        # ${{ }} 를 셸에 직접 넣지 않고 env 로 받는다. 브랜치 이름에 셸 메타문자가 섞여도
+        # 스크립트 인젝션이 되지 않게 하기 위함 (pull_request_target 이라 더 중요하다).
         env:
           HEAD_REF: ${{ github.head_ref }}
         run: |
