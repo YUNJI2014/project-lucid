@@ -207,5 +207,5 @@ public class PlayerMove : MonoBehaviour
 
         Vector3 pushDirection = new Vector3(hit.moveDirection.x, 0f, hit.moveDirection.z);
         hitRigidbody.AddForce(pushDirection * pushForce, ForceMode.Impulse);
-    }
+    } 
 }
