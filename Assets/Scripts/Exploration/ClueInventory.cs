@@ -6,7 +6,7 @@ using System.Linq;
 /// 획득한 단서를 보관한다. (GDD 5장 · FR-302 · FR-206)
 /// 같은 단서를 두 번 주워도 한 번만 들어간다 — 같은 오브젝트를 다시 조사하는 경우가 있기 때문이다.
 /// </summary>
-public sealed class ClueInventory
+public sealed class ClueInventory : IReadOnlyClueInventory
 {
     private readonly Dictionary<string, Clue> _clues = new Dictionary<string, Clue>();
 

@@ -99,4 +99,18 @@ public class GuestInvestigationTests
         Assert.AreEqual(0, inv.Purification.AddGauge(10));
         Assert.IsFalse(inv.Purification.IsPurificationReady);
     }
+
+    [Test]
+    public void 단서를_넣는_길은_CollectClue_하나뿐이다()
+    {
+        // 세원님 리뷰 — Clues 를 ClueInventory 로 노출하던 때는
+        // investigation.Clues.Add(clue) 로 정화 해금을 건너뛸 수 있었다.
+        // 조회 전용 타입으로 바꿔 컴파일 단계에서 막았고, 되돌아가지 않게 여기서 잡는다.
+        var cluesType = typeof(GuestInvestigation).GetProperty(nameof(GuestInvestigation.Clues)).PropertyType;
+
+        Assert.AreEqual(typeof(IReadOnlyClueInventory), cluesType,
+            "Clues 는 조회 전용으로 노출해야 한다. ClueInventory 를 그대로 내주면 해금을 건너뛸 수 있다.");
+        Assert.IsNull(cluesType.GetMethod("Add"),
+            "조회 전용 창구에 Add 가 있으면 안 된다.");
+    }
 }

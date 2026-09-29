@@ -15,7 +15,13 @@ public sealed class GuestInvestigation
     /// <summary>정화 해금에 필요한 핵심 단서 개수. (FR-305)</summary>
     public int RequiredKeyClues { get; }
 
-    public ClueInventory Clues { get; }
+    private readonly ClueInventory _clues = new ClueInventory();
+
+    /// <summary>
+    /// 모은 단서. <b>조회 전용</b>이다 — 단서를 넣는 길은 <see cref="CollectClue"/> 하나뿐이다.
+    /// 보관함을 그대로 내주면 <c>Clues.Add(clue)</c> 로 정화 해금을 건너뛸 수 있다.
+    /// </summary>
+    public IReadOnlyClueInventory Clues => _clues;
 
     /// <summary>탐색과 전투가 공유하는 정화 상태.</summary>
     public PurificationTracker Purification { get; }
@@ -28,7 +34,6 @@ public sealed class GuestInvestigation
 
         RequiredKeyClues = requiredKeyClues;
         Purification = purification ?? throw new ArgumentNullException(nameof(purification));
-        Clues = new ClueInventory();
     }
 
     /// <summary>핵심 단서를 필요한 만큼 모았는지.</summary>
@@ -43,7 +48,7 @@ public sealed class GuestInvestigation
     /// <returns>처음 얻은 단서면 true. 획득 연출 표시 여부 판단에 쓴다 (FR-302).</returns>
     public bool CollectClue(Clue clue)
     {
-        var isNew = Clues.Add(clue);
+        var isNew = _clues.Add(clue);
 
         if (isNew && HasEnoughKeyClues)
             Purification.Unlock();
