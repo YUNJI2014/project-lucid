@@ -11,9 +11,9 @@ public class PlayerMove : MonoBehaviour
     [SerializeField] private float gravity = -9.81f;
 
     [Header("Air Control")]
-    [SerializeField] private float groundAcceleration = 50f;   // 지상: 즉각 반응
-    [SerializeField] private float airAcceleration = 15f;      // 공중: 서서히 영향
-    [SerializeField] private float airControlMaxSpeed = 8f;    // 공중에서 입력으로 도달 가능한 최대 속도
+    [SerializeField] private float groundAcceleration = 50f;
+    [SerializeField] private float airAcceleration = 15f;
+    [SerializeField] private float airControlMaxSpeed = 8f;
 
     [Header("Crouch")]
     [SerializeField] private float crouchingHeight = 1.0f;
@@ -37,8 +37,8 @@ public class PlayerMove : MonoBehaviour
     private bool crouchInput;
     private bool isCrouching;
 
-    private Vector3 horizontalVelocity; // 수평 속도 (x, z)
-    private float verticalVelocity;     // 수직 속도 (y)
+    private Vector3 horizontalVelocity;
+    private float verticalVelocity;
     private float verticalRotation;
 
     private float standingHeight;
@@ -61,25 +61,53 @@ public class PlayerMove : MonoBehaviour
     {
         inputActions.Player.Enable();
 
-        inputActions.Player.Move.performed += ctx => moveInput = ctx.ReadValue<Vector2>();
-        inputActions.Player.Move.canceled += ctx => moveInput = Vector2.zero;
+        inputActions.Player.Move.performed += OnMovePerformed;
+        inputActions.Player.Move.canceled += OnMoveCanceled;
 
-        inputActions.Player.Look.performed += ctx => lookInput = ctx.ReadValue<Vector2>();
-        inputActions.Player.Look.canceled += ctx => lookInput = Vector2.zero;
+        inputActions.Player.Look.performed += OnLookPerformed;
+        inputActions.Player.Look.canceled += OnLookCanceled;
 
-        inputActions.Player.Jump.performed += ctx => TryJump();
+        inputActions.Player.Jump.performed += OnJumpPerformed;
 
-        inputActions.Player.Sprint.performed += ctx => sprintInput = true;
-        inputActions.Player.Sprint.canceled += ctx => sprintInput = false;
+        inputActions.Player.Sprint.performed += OnSprintPerformed;
+        inputActions.Player.Sprint.canceled += OnSprintCanceled;
 
-        inputActions.Player.Crouch.performed += ctx => crouchInput = true;
-        inputActions.Player.Crouch.canceled += ctx => crouchInput = false;
+        inputActions.Player.Crouch.performed += OnCrouchPerformed;
+        inputActions.Player.Crouch.canceled += OnCrouchCanceled;
     }
 
     private void OnDisable()
     {
+        inputActions.Player.Move.performed -= OnMovePerformed;
+        inputActions.Player.Move.canceled -= OnMoveCanceled;
+
+        inputActions.Player.Look.performed -= OnLookPerformed;
+        inputActions.Player.Look.canceled -= OnLookCanceled;
+
+        inputActions.Player.Jump.performed -= OnJumpPerformed;
+
+        inputActions.Player.Sprint.performed -= OnSprintPerformed;
+        inputActions.Player.Sprint.canceled -= OnSprintCanceled;
+
+        inputActions.Player.Crouch.performed -= OnCrouchPerformed;
+        inputActions.Player.Crouch.canceled -= OnCrouchCanceled;
+
         inputActions.Player.Disable();
     }
+
+    private void OnMovePerformed(InputAction.CallbackContext ctx) => moveInput = ctx.ReadValue<Vector2>();
+    private void OnMoveCanceled(InputAction.CallbackContext ctx) => moveInput = Vector2.zero;
+
+    private void OnLookPerformed(InputAction.CallbackContext ctx) => lookInput = ctx.ReadValue<Vector2>();
+    private void OnLookCanceled(InputAction.CallbackContext ctx) => lookInput = Vector2.zero;
+
+    private void OnJumpPerformed(InputAction.CallbackContext ctx) => TryJump();
+
+    private void OnSprintPerformed(InputAction.CallbackContext ctx) => sprintInput = true;
+    private void OnSprintCanceled(InputAction.CallbackContext ctx) => sprintInput = false;
+
+    private void OnCrouchPerformed(InputAction.CallbackContext ctx) => crouchInput = true;
+    private void OnCrouchCanceled(InputAction.CallbackContext ctx) => crouchInput = false;
 
     private void Update()
     {
@@ -129,38 +157,30 @@ public class PlayerMove : MonoBehaviour
     {
         bool isGrounded = controller.isGrounded;
 
-        // 원하는 이동 방향 (입력 기반)
         Vector3 wishDir = transform.right * moveInput.x + transform.forward * moveInput.y;
 
         float targetSpeed = isCrouching ? crouchSpeed : (sprintInput ? sprintSpeed : walkSpeed);
 
         if (isGrounded)
         {
-            // 지상: 목표 속도로 빠르게 수렴 (기존과 비슷한 반응성)
             Vector3 targetVelocity = wishDir * targetSpeed;
             horizontalVelocity = Vector3.MoveTowards(horizontalVelocity, targetVelocity, groundAcceleration * Time.deltaTime);
 
-            // 착지 순간 아래로 살짝 눌러주기 (지형 밀착용, 크지 않게)
             if (verticalVelocity < 0)
                 verticalVelocity = -2f;
         }
         else
         {
-            // 공중: 기존 관성(horizontalVelocity)은 유지하면서, 입력으로 "가속"만 살짝 가함
             Vector3 addVelocity = wishDir * airAcceleration * Time.deltaTime;
             Vector3 newVelocity = horizontalVelocity + addVelocity;
 
-            // 입력 방향으로의 속도가 airControlMaxSpeed를 넘지 않도록 제한
-            // (기존 관성으로 그 이상 빠르면, 그 관성 자체는 안 깎음 — 오버워치 특유의 "빠른 채로 유지"되는 느낌)
             float currentSpeedInWishDir = Vector3.Dot(horizontalVelocity, wishDir);
             if (currentSpeedInWishDir < airControlMaxSpeed)
             {
                 horizontalVelocity = newVelocity;
             }
-            // wishDir이 0벡터(입력 없음)일 때는 addVelocity도 0이라 자연스럽게 관성만 유지됨
         }
 
-        // 중력 적용
         verticalVelocity += gravity * Time.deltaTime;
 
         Vector3 fullVelocity = horizontalVelocity + Vector3.up * verticalVelocity;
@@ -172,7 +192,6 @@ public class PlayerMove : MonoBehaviour
         if (controller.isGrounded && !isCrouching)
         {
             verticalVelocity = Mathf.Sqrt(jumpHeight * -2f * gravity);
-            // horizontalVelocity는 건드리지 않음 → 점프 시점의 수평 속도가 그대로 공중으로 이어짐
         }
     }
 
@@ -180,15 +199,12 @@ public class PlayerMove : MonoBehaviour
     {
         Rigidbody hitRigidbody = hit.collider.attachedRigidbody;
 
-        // 충돌한 대상이 Rigidbody를 가지고 있고, Kinematic이 아닐 때만
         if (hitRigidbody == null || hitRigidbody.isKinematic)
             return;
 
-        // 아래쪽 물체는 밀지 않음 (바닥 등)
         if (hit.moveDirection.y < -0.3f)
             return;
 
-        // 충돌 방향으로 밀어줌
         Vector3 pushDirection = new Vector3(hit.moveDirection.x, 0f, hit.moveDirection.z);
         hitRigidbody.AddForce(pushDirection * pushForce, ForceMode.Impulse);
     }
