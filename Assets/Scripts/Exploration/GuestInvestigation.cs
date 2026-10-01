@@ -5,7 +5,7 @@ using System;
 ///
 /// 핵심 단서가 필요 개수에 도달하면 <see cref="PurificationTracker.Unlock"/> 을 여기서 직접 호출한다.
 /// 해금 판정을 호출자에게 맡기면 "단서는 다 모았는데 해금을 안 한" 경로가 생기기 때문이다.
-/// 전투 쪽에서 <see cref="EnemyCombatState"/> 가 기억 삭제 시 Lock() 을 직접 부르는 것과 같은 이유다.
+/// 전투 쪽에서 <c>EnemyCombatState</c> 가 기억 삭제 시 Lock() 을 직접 부르는 것과 같은 이유다.
 ///
 /// 탐색(이 클래스)과 전투(EnemyCombatState)가 <b>같은 PurificationTracker 인스턴스를 공유</b>한다.
 /// 탐색이 열고, 전투가 채우거나 잠근다. 그 트래커가 두 파트의 유일한 접점이다.

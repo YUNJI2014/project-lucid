@@ -2,7 +2,7 @@
     "name": "Lucid.Exploration",
     "rootNamespace": "",
     "references": [
-        "Lucid.Combat"
+        "Lucid.Core"
     ],
     "includePlatforms": [],
     "excludePlatforms": [],
