@@ -12,32 +12,26 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: PR 에 포함된 커밋 메시지 검사
+      # HEAD 커밋 하나만 본다.
+      # 전체를 검사하면 과거 커밋 하나가 어긋났을 때 새 커밋을 아무리 올려도
+      # 계속 실패해서, rebase 말고는 빠져나올 방법이 없는 덫이 된다.
+      # 실제로 #11 이 이 덫에 9 일 걸려 있었다.
+      - name: HEAD 커밋 메시지 검사
         env:
-          BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
         run: |
           set -eu
-          FAILED=0
           TMP=$(mktemp)
+          git log -1 --format=%B "$HEAD_SHA" > "$TMP"
+          SUBJECT=$(head -1 "$TMP")
 
-          for SHA in $(git rev-list --no-merges "$BASE_SHA".."$HEAD_SHA"); do
-            git log -1 --format=%B "$SHA" > "$TMP"
-            SUBJECT=$(head -1 "$TMP")
-            if sh scripts/check-commit-msg.sh "$TMP"; then
-              echo "  ✓ ${SHA%${SHA#???????}}  $SUBJECT"
-            else
-              echo "    ^ 위 커밋: ${SHA%${SHA#???????}}"
-              FAILED=1
-            fi
-          done
-
-          if [ "$FAILED" -ne 0 ]; then
+          if sh scripts/check-commit-msg.sh "$TMP"; then
+            echo "  ✓ ${HEAD_SHA%${HEAD_SHA#???????}}  $SUBJECT"
             echo ""
-            echo "커밋 메시지 규칙을 어긴 커밋이 있습니다. CLAUDE.md 1장 \"커밋 메시지\" 를 참고해 고쳐주세요."
-            echo "마지막 커밋만 고치려면:  git commit --amend"
+            echo "HEAD 커밋 메시지가 규칙에 맞습니다."
+          else
+            echo ""
+            echo "HEAD 커밋 메시지가 규칙에 어긋납니다. CLAUDE.md 1장 \"커밋 메시지\" 참고."
+            echo "고치려면:  git commit --amend   (그다음 git push --force-with-lease)"
             exit 1
           fi
-
-          echo ""
-          echo "모든 커밋 메시지가 규칙에 맞습니다."

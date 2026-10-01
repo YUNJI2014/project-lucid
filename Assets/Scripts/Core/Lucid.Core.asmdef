@@ -1,9 +1,7 @@
 {
-    "name": "Lucid.Combat",
+    "name": "Lucid.Core",
     "rootNamespace": "",
-    "references": [
-        "Lucid.Core"
-    ],
+    "references": [],
     "includePlatforms": [],
     "excludePlatforms": [],
     "allowUnsafeCode": false,
