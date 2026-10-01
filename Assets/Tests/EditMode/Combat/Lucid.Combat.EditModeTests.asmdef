@@ -3,6 +3,7 @@
     "rootNamespace": "",
     "references": [
         "Lucid.Combat",
+        "Lucid.Core",
         "UnityEngine.TestRunner",
         "UnityEditor.TestRunner"
     ],
