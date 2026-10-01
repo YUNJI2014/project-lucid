@@ -95,6 +95,11 @@ public class PlayerMove : MonoBehaviour
         inputActions.Player.Disable();
     }
 
+    private void OnDestroy()
+    {
+        inputActions?.Dispose();
+    }
+
     private void OnMovePerformed(InputAction.CallbackContext ctx) => moveInput = ctx.ReadValue<Vector2>();
     private void OnMoveCanceled(InputAction.CallbackContext ctx) => moveInput = Vector2.zero;
 
